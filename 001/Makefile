@@ -2,25 +2,27 @@ CC=gcc
 AR=ar cq
 RANLIB=ranlib
 
-TARGET=libxxx.a
+OUTPUTDIR=output
+TARGET=$(OUTPUTDIR)/libxxx.a
 
 INCLUDES=-I. -Iout_inc -Iin_inc
 DEFINES= $(INCLUDES) -DXXX
-CFLAGS=-g $(DEFINES) -Wall -O2
+CFLAGS=-g $(DEFINES) -Wall -O2 -MMD
 
 SRCS= $(wildcard src/aaa/*.c) $(wildcard src/bbb/*.c) $(wildcard src/ccc/*.c)
 
-OBJDIRS= $(foreach file, $(dir $(SRCS)), obj/$(file))
-OBJS= $(foreach file, $(patsubst %.c,%.o,$(SRCS)), obj/$(file))
+OBJDIRS= $(sort $(foreach file, $(dir $(SRCS)), $(OUTPUTDIR)/$(file)))
+OBJS= $(foreach file, $(patsubst %.c,%.o,$(SRCS)), $(OUTPUTDIR)/$(file))
+DEPENDS= $(OBJS:%.o=%.d)
 
-obj/%.o:
-	$(CC) $(CFLAGS) -oobj/$*.o -c $*.c
+$(OUTPUTDIR)/%.o:
+	$(CC) $(CFLAGS) -o $(OUTPUTDIR)/$*.o -c $*.c
 
 
 all: obj-dir $(TARGET)
 
 obj-dir:
-	-@mkdir -p $(OBJDIRS)
+	-@mkdir -p $(OUTPUTDIR) $(OBJDIRS)
 
 $(TARGET): $(OBJS)
 	-@rm -f $@
@@ -30,3 +32,5 @@ $(TARGET): $(OBJS)
 clean:
 	-@rm -f $(TARGET)
 	-@rm -fr $(OBJDIRS)
+
+-include $(DEPENDS)
